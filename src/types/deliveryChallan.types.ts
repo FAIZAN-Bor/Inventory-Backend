@@ -47,9 +47,11 @@ export interface CreateChallanItemDTO {
 }
 
 export interface DeliveryChallanFilter {
+    page?: number;
+    limit?: number;
     search?: string;
     party_id?: string;
     status?: string;
-    start_date?: string;
-    end_date?: string;
+    startDate?: string;
+    endDate?: string;
 }
