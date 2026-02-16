@@ -134,9 +134,15 @@ export const getAll = async (companyId: string | undefined, filter: InventoryFil
         query = query.eq('is_active', true);
     }
 
-    const { data, count, error } = await query
-        .order('name', { ascending: true })
-        .range(offset, offset + limit - 1);
+    // Apply sorting
+    query = query.order('name', { ascending: true });
+
+    // Apply pagination only if limit is positive
+    if (limit > 0) {
+        query = query.range(offset, offset + limit - 1);
+    }
+
+    const { data, count, error } = await query;
 
     if (error) {
         console.error('[Inventory Service] getAll error:', JSON.stringify(error, null, 2));

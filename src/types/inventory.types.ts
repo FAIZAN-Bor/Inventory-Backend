@@ -35,6 +35,7 @@ export interface CreateInventoryDTO {
 }
 
 export interface UpdateInventoryDTO {
+    article_code?: string;
     name?: string;
     description?: string;
     category_id?: string;

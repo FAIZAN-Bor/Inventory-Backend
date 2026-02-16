@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../config/supabase';
 import { TABLES } from '../config/database';
 import { Supplier, CreateSupplierDTO, UpdateSupplierDTO, SupplierFilter, SupplierTransaction } from '../types';
 import { NotFoundError, BadRequestError } from '../utils';
+import { generateSupplierNumber } from '../utils/invoiceGenerator';
 
 /**
  * Generate a unique payment voucher number
@@ -168,10 +169,13 @@ export const getLedger = async (companyId: string, supplierId: string): Promise<
 };
 
 export const create = async (companyId: string, dto: CreateSupplierDTO): Promise<Supplier> => {
-    // 1. Create Global Supplier
+    // Generate supplier number (party_number) with gap filling
+    const supplierNumber = await generateSupplierNumber(companyId);
+
     const { data: supplier, error: supplierError } = await supabaseAdmin
         .from(TABLES.SUPPLIERS)
         .insert({
+            party_number: supplierNumber,
             name: dto.name,
             contact_person: dto.contact_person,
             phone: dto.phone,

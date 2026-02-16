@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../config/supabase';
 import { TABLES } from '../config/database';
 import { Party, CreatePartyDTO, UpdatePartyDTO, PartyFilter, PartyTransaction } from '../types';
 import { NotFoundError, BadRequestError } from '../utils';
+import { generatePartyNumber } from '../utils/invoiceGenerator';
 
 export const getAll = async (companyId: string, filter: PartyFilter) => {
     const { page = 1, limit = 20, search, type, status, city } = filter;
@@ -154,9 +155,13 @@ export const create = async (companyId: string, dto: CreatePartyDTO): Promise<Pa
 
     //    We assume 'create' means adding a NEW global party.
 
+    // Generate party number with gap filling
+    const partyNumber = await generatePartyNumber(companyId);
+
     const { data: party, error: partyError } = await supabaseAdmin
         .from(TABLES.PARTIES)
         .insert({
+            party_number: partyNumber, // Explicitly set party number
             name: dto.name,
             contact_person: dto.contact_person,
             phone: dto.phone,

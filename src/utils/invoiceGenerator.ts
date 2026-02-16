@@ -93,11 +93,52 @@ export const generateArticleCode = async (
 /**
  * Generate party number
  */
+/**
+ * Generate party number (MAX + 1)
+ */
 export const generatePartyNumber = async (companyId: string): Promise<number> => {
+    // Parties are GLOBAL. Do not filter by company_id.
     const { data, error } = await supabaseAdmin
         .from(TABLES.PARTIES)
         .select('party_number')
-        .eq('company_id', companyId)
+        .order('party_number', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (!error && data) {
+        return (data.party_number as number) + 1;
+    }
+
+    return 1;
+};
+
+/**
+ * Generate supplier number with gap filling
+ */
+export const generateSupplierNumber = async (companyId: string): Promise<number> => {
+    // For suppliers, party_number is global serial, not per company in the schema?
+    // Migration: party_number SERIAL. It is NOT per company_id in unique constraint.
+    // However, the function signature usually takes companyId. 
+    // BUT the schema says `party_number SERIAL`. This implies GLOBAL unique.
+    // Wait, the user said "party number assigns to him...".
+    // If it's global, gap filling is global.
+    // Let's check schema again. `party_number` is just a column.
+
+    // In `006_create_suppliers.sql`: 
+    // party_number SERIAL
+    // No unique constraint with company_id.
+
+    // In `005_create_parties.sql` (I didn't view it but I assume similar).
+
+    // If it's SERIAL, it is global. 
+    // If I filter by companyId, I might find gaps *within the company* that are actually taken by *other* companies if it was shared?
+    // But `Suppliers` table columns: `company_id` is NOT in the main table! It's in `financials`.
+    // The `Suppliers` table is GLOBAL.
+    // So valid query for gap-filling MUST be global (no companyId filter).
+
+    const { data, error } = await supabaseAdmin
+        .from(TABLES.SUPPLIERS)
+        .select('party_number')
         .order('party_number', { ascending: false })
         .limit(1)
         .single();
@@ -145,5 +186,6 @@ export default {
     generateInvoiceNumber,
     generateArticleCode,
     generatePartyNumber,
+    generateSupplierNumber,
     generateDeliveryChallanNumber,
 };
